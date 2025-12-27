@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>hastenna</title>
 
-    <!-- Preload preferred image -->
-    <link rel="preload" as="image" href="image2.webp">
+    <!-- Preload image for faster first paint -->
+    <link rel="preload" as="image" href="image2.png">
 
     <style>
         html, body {
@@ -16,59 +16,33 @@
             height: 100%;
             overflow: hidden;
 
+            /* Mobile tap refinement */
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
             user-select: none;
-        }
 
-        body {
             cursor: default;
-            transition: cursor 0.2s linear;
         }
 
-        body.fade-cursor {
+        body.hide-cursor {
             cursor: none;
         }
 
-        picture, img {
+        img {
             width: 100vw;
             height: 100vh;
-            display: block;
-        }
-
-        img {
             object-fit: cover;
+            display: block;
+
+            /* Prevent drag ghost image */
             -webkit-user-drag: none;
-
-            /* Soft fade-in */
-            opacity: 0;
-            transition: opacity 1.2s ease;
-        }
-
-        img.loaded {
-            opacity: 1;
         }
     </style>
 </head>
 <body onclick="toggleFullscreen()">
-
-    <!-- WebP with PNG fallback -->
-    <picture>
-        <source srcset="image2.webp" type="image/webp">
-        <img src="image2.png" alt="Static Image" id="hero">
-    </picture>
+    <img src="image2.png" alt="Static Image">
 
     <script>
-        const FADE_DELAY = 3333; // 3.33333 seconds
-        let cursorTimer;
-
-        const img = document.getElementById("hero");
-
-        /* Fade image in when loaded */
-        img.addEventListener("load", () => {
-            img.classList.add("loaded");
-        });
-
         /* Fullscreen toggle */
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
@@ -78,35 +52,22 @@
             }
         }
 
-        /* Keyboard shortcut: F */
-        document.addEventListener("keydown", (e) => {
-            if (e.key.toLowerCase() === "f") {
-                toggleFullscreen();
-            }
-        });
+        /* Cursor auto-hide after inactivity */
+        let cursorTimer;
 
-        /* Cursor fade logic (fullscreen only) */
-        function resetCursorFade() {
-            if (!document.fullscreenElement) {
-                document.body.classList.remove("fade-cursor");
-                return;
-            }
-
-            document.body.classList.remove("fade-cursor");
+        function showCursor() {
+            document.body.classList.remove("hide-cursor");
             clearTimeout(cursorTimer);
-
             cursorTimer = setTimeout(() => {
-                document.body.classList.add("fade-cursor");
-            }, FADE_DELAY);
+                document.body.classList.add("hide-cursor");
+            }, 2000);
         }
 
-        document.addEventListener("mousemove", resetCursorFade);
-        document.addEventListener("touchstart", resetCursorFade);
+        document.addEventListener("mousemove", showCursor);
+        document.addEventListener("touchstart", showCursor);
 
-        document.addEventListener("fullscreenchange", () => {
-            resetCursorFade();
-        });
+        // Start timer immediately
+        showCursor();
     </script>
-
 </body>
 </html>
