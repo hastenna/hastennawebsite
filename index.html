@@ -21,13 +21,15 @@
         }
     </style>
 </head>
-<body onclick="enterFullscreen()">
+<body onclick="toggleFullscreen()">
     <img src="image2.png" alt="Static Image">
 
     <script>
-        function enterFullscreen() {
+        function toggleFullscreen() {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen().catch(() => {});
             }
         }
     </script>
