@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>hastenna</title>
+
+    <!-- Preload image for faster first paint -->
+    <link rel="preload" as="image" href="image2.png">
+
     <style>
         html, body {
             margin: 0;
@@ -11,13 +15,27 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            cursor: pointer;
+
+            /* Mobile tap refinement */
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+
+            cursor: default;
         }
+
+        body.hide-cursor {
+            cursor: none;
+        }
+
         img {
             width: 100vw;
             height: 100vh;
             object-fit: cover;
             display: block;
+
+            /* Prevent drag ghost image */
+            -webkit-user-drag: none;
         }
     </style>
 </head>
@@ -25,6 +43,7 @@
     <img src="image2.png" alt="Static Image">
 
     <script>
+        /* Fullscreen toggle */
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(() => {});
@@ -32,6 +51,23 @@
                 document.exitFullscreen().catch(() => {});
             }
         }
+
+        /* Cursor auto-hide after inactivity */
+        let cursorTimer;
+
+        function showCursor() {
+            document.body.classList.remove("hide-cursor");
+            clearTimeout(cursorTimer);
+            cursorTimer = setTimeout(() => {
+                document.body.classList.add("hide-cursor");
+            }, 2000);
+        }
+
+        document.addEventListener("mousemove", showCursor);
+        document.addEventListener("touchstart", showCursor);
+
+        // Start timer immediately
+        showCursor();
     </script>
 </body>
 </html>
