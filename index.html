@@ -5,10 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>hastenna</title>
     <style>
-        body {
+        html, body {
             margin: 0;
             padding: 0;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
+            cursor: pointer;
         }
         img {
             width: 100vw;
@@ -18,9 +21,15 @@
         }
     </style>
 </head>
-<body>
+<body onclick="enterFullscreen()">
     <img src="image2.png" alt="Static Image">
+
+    <script>
+        function enterFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
+        }
+    </script>
 </body>
 </html>
-
-
