@@ -17,18 +17,27 @@
             -webkit-tap-highlight-color: transparent;
             user-select: none;
             cursor: default;
+            background: #000;
         }
         body.hide-cursor {
             cursor: none;
         }
+        
+        /* Container for layered effects */
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
         img {
             width: 100vw;
             height: 100vh;
             object-fit: cover;
             display: block;
             -webkit-user-drag: none;
-            animation: breathe 6s ease-in-out infinite;
-            transition: filter 0.1s;
+            animation: breathe 9s ease-in-out infinite;
+            transition: filter 0.15s, transform 0.1s;
         }
         
         /* Breathing animation */
@@ -37,23 +46,147 @@
             50% { transform: scale(1.02); }
         }
         
+        /* Vignette overlay */
+        #vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 0%, transparent 50%, rgba(0,0,0,0.7) 100%);
+            animation: vignettePulse 9s ease-in-out infinite;
+            z-index: 1;
+        }
+        
+        @keyframes vignettePulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 0.8; }
+        }
+        
+        /* Scanlines overlay */
+        #scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            z-index: 2;
+            opacity: 0.3;
+        }
+        
+        /* Grain/noise overlay */
+        #grain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.08;
+            z-index: 3;
+            animation: grainMove 0.5s steps(1) infinite;
+        }
+        
+        @keyframes grainMove {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(-2%, -2%); }
+            50% { transform: translate(-2%, 2%); }
+            75% { transform: translate(2%, -2%); }
+        }
+        
+        /* Chromatic aberration effect */
+        img.chromatic {
+            filter: saturate(1.2);
+        }
+        img.chromatic::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: inherit;
+            mix-blend-mode: screen;
+        }
+        
         /* Glitch effect classes */
         img.glitch-1 {
-            filter: hue-rotate(5deg) saturate(1.2);
-            transform: translate(2px, 1px) scale(1.01);
+            filter: hue-rotate(10deg) saturate(1.3) contrast(1.1);
+            transform: translate(3px, 2px) scale(1.015);
         }
         img.glitch-2 {
-            filter: hue-rotate(-3deg) contrast(1.1);
-            transform: translate(-1px, -2px) scale(1.005);
+            filter: hue-rotate(-8deg) contrast(1.15) brightness(1.1);
+            transform: translate(-2px, -3px) scale(1.01);
         }
         img.glitch-3 {
-            filter: brightness(1.1) contrast(0.95);
-            transform: translate(1px, -1px) scale(1.008);
+            filter: brightness(1.15) contrast(0.9) saturate(0.8);
+            transform: translate(2px, -2px) scale(1.012);
+        }
+        img.glitch-shake {
+            animation: shake 0.3s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            10% { transform: translate(-2px, 2px) scale(1.005); }
+            20% { transform: translate(2px, -2px) scale(0.995); }
+            30% { transform: translate(-3px, 0px) scale(1.003); }
+            40% { transform: translate(3px, 2px) scale(0.998); }
+            50% { transform: translate(-2px, -3px) scale(1.002); }
+            60% { transform: translate(2px, 3px) scale(0.997); }
+            70% { transform: translate(-3px, -2px) scale(1.004); }
+            80% { transform: translate(3px, -3px) scale(0.996); }
+            90% { transform: translate(-2px, 2px) scale(1.001); }
+        }
+        
+        /* Inverted color flash */
+        img.invert-flash {
+            filter: invert(1) hue-rotate(180deg);
+        }
+        
+        /* Desaturation on idle */
+        body.idle img {
+            filter: saturate(0.4) brightness(0.9);
+        }
+        
+        /* Color shift overlay */
+        #colorshift {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: linear-gradient(45deg, rgba(255,0,100,0.05), rgba(0,255,255,0.05));
+            z-index: 4;
+            mix-blend-mode: overlay;
+            animation: colorShiftAnim 12s ease-in-out infinite;
+        }
+        
+        @keyframes colorShiftAnim {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
         }
     </style>
 </head>
 <body onclick="toggleFullscreen()">
-    <img src="hastennabanner.jpg" alt="Static Image" id="mainImage">
+    <div id="container">
+        <img src="hastennabanner.jpg" alt="Static Image" id="mainImage">
+        <div id="vignette"></div>
+        <div id="scanlines"></div>
+        <div id="grain"></div>
+        <div id="colorshift"></div>
+    </div>
     <script>
         /* Fullscreen toggle */
         function toggleFullscreen() {
@@ -64,39 +197,65 @@
             }
         }
         
-        /* Cursor auto-hide after inactivity */
+        /* Cursor auto-hide and idle state */
         let cursorTimer;
+        let idleTimer;
         function showCursor() {
             document.body.classList.remove("hide-cursor");
+            document.body.classList.remove("idle");
             clearTimeout(cursorTimer);
+            clearTimeout(idleTimer);
+            
             cursorTimer = setTimeout(() => {
                 document.body.classList.add("hide-cursor");
             }, 5000);
+            
+            idleTimer = setTimeout(() => {
+                document.body.classList.add("idle");
+            }, 8000);
         }
         document.addEventListener("mousemove", showCursor);
         document.addEventListener("touchstart", showCursor);
         showCursor();
         
-        /* Subtle glitch effect */
+        /* Enhanced glitch effect system */
         const img = document.getElementById('mainImage');
         const glitchClasses = ['glitch-1', 'glitch-2', 'glitch-3'];
         
         function triggerGlitch() {
-            // Random glitch class
             const glitchClass = glitchClasses[Math.floor(Math.random() * glitchClasses.length)];
             img.classList.add(glitchClass);
             
-            // Remove after brief moment (50-150ms)
+            // 30% chance of screen shake with glitch
+            if (Math.random() > 0.7) {
+                img.classList.add('glitch-shake');
+                setTimeout(() => {
+                    img.classList.remove('glitch-shake');
+                }, 300);
+            }
+            
             setTimeout(() => {
                 img.classList.remove(glitchClass);
-            }, 50 + Math.random() * 100);
+            }, 80 + Math.random() * 120);
             
-            // Schedule next glitch (15-30 seconds)
-            setTimeout(triggerGlitch, 15000 + Math.random() * 15000);
+            // More frequent glitches: 8-20 seconds
+            setTimeout(triggerGlitch, 8000 + Math.random() * 12000);
         }
         
-        // Start glitch cycle after initial delay
-        setTimeout(triggerGlitch, 10000 + Math.random() * 10000);
+        /* Inverted color flash effect */
+        function triggerInvert() {
+            img.classList.add('invert-flash');
+            setTimeout(() => {
+                img.classList.remove('invert-flash');
+            }, 100);
+            
+            // Occasional inverts: 25-45 seconds
+            setTimeout(triggerInvert, 25000 + Math.random() * 20000);
+        }
+        
+        // Start effect cycles
+        setTimeout(triggerGlitch, 5000 + Math.random() * 5000);
+        setTimeout(triggerInvert, 15000 + Math.random() * 10000);
     </script>
 </body>
 </html>
