@@ -228,48 +228,11 @@
         <div id="grain"></div>
         <div class="glitch-overlay" id="glitchOverlay"></div>
     </div>
-    <div id="cursor"></div>
     
     <script>
-        const cursor = document.getElementById('cursor');
         const container = document.getElementById('container');
         const glitchOverlay = document.getElementById('glitchOverlay');
         const mainImage = document.getElementById('mainImage');
-        
-        let mouseX = window.innerWidth / 2;
-        let mouseY = window.innerHeight / 2;
-        let cursorX = mouseX;
-        let cursorY = mouseY;
-        let cursorTimeout;
-        
-        // Smooth cursor follow
-        document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-            
-            // Show cursor on movement
-            cursor.classList.remove('hidden');
-            
-            // Reset timeout
-            clearTimeout(cursorTimeout);
-            cursorTimeout = setTimeout(() => {
-                cursor.classList.add('hidden');
-            }, 3000);
-        });
-        
-        // Start initial timeout
-        cursorTimeout = setTimeout(() => {
-            cursor.classList.add('hidden');
-        }, 3000);
-        
-        function animateCursor() {
-            cursorX += (mouseX - cursorX) * 0.15;
-            cursorY += (mouseY - cursorY) * 0.15;
-            cursor.style.left = cursorX + 'px';
-            cursor.style.top = cursorY + 'px';
-            requestAnimationFrame(animateCursor);
-        }
-        animateCursor();
         
         // Fullscreen toggle on click
         document.addEventListener('click', () => {
