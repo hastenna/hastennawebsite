@@ -140,9 +140,14 @@
             border-radius: 50%;
             pointer-events: none;
             z-index: 9999;
-            transition: transform 0.1s ease-out;
+            transition: transform 0.1s ease-out, opacity 0.3s ease-out;
             box-shadow: 0 0 20px rgba(255, 0, 100, 0.5), inset 0 0 20px rgba(0, 255, 255, 0.3);
             mix-blend-mode: difference;
+            opacity: 1;
+        }
+        
+        #cursor.hidden {
+            opacity: 0;
         }
         
         #cursor::after {
@@ -180,17 +185,17 @@
             }
             25% { 
                 opacity: 0.3;
-                background: linear-gradient(90deg, rgba(255,0,0,0.3) 0%, rgba(0,255,255,0.3) 100%);
+                background: rgba(255, 0, 0, 0.3);
                 transform: translate(5px, 3px);
             }
             50% { 
                 opacity: 0.5;
-                background: linear-gradient(-90deg, rgba(0,255,0,0.3) 0%, rgba(255,0,255,0.3) 100%);
+                background: rgba(255, 0, 0, 0.5);
                 transform: translate(-4px, -5px);
             }
             75% { 
                 opacity: 0.2;
-                background: linear-gradient(45deg, rgba(0,0,255,0.3) 0%, rgba(255,255,0,0.3) 100%);
+                background: rgba(255, 0, 0, 0.2);
                 transform: translate(3px, -4px);
             }
         }
@@ -235,12 +240,27 @@
         let mouseY = window.innerHeight / 2;
         let cursorX = mouseX;
         let cursorY = mouseY;
+        let cursorTimeout;
         
         // Smooth cursor follow
         document.addEventListener('mousemove', (e) => {
             mouseX = e.clientX;
             mouseY = e.clientY;
+            
+            // Show cursor on movement
+            cursor.classList.remove('hidden');
+            
+            // Reset timeout
+            clearTimeout(cursorTimeout);
+            cursorTimeout = setTimeout(() => {
+                cursor.classList.add('hidden');
+            }, 3000);
         });
+        
+        // Start initial timeout
+        cursorTimeout = setTimeout(() => {
+            cursor.classList.add('hidden');
+        }, 3000);
         
         function animateCursor() {
             cursorX += (mouseX - cursorX) * 0.15;
