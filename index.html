@@ -97,37 +97,23 @@
     
     <script>
         const layers = [
-            { el: document.getElementById('layer1'), depth: 0.08, x: 0, y: 0, vx: 0, vy: 0 },
-            { el: document.getElementById('layer2'), depth: 0.12, x: 0, y: 0, vx: 0, vy: 0 },
-            { el: document.getElementById('layer3'), depth: 0.18, x: 0, y: 0, vx: 0, vy: 0 },
-            { el: document.getElementById('layer4'), depth: 0.25, x: 0, y: 0, vx: 0, vy: 0 },
-            { el: document.getElementById('layer5'), depth: 0.35, x: 0, y: 0, vx: 0, vy: 0 },
-            { el: document.getElementById('layer6'), depth: 0.5, x: 0, y: 0, vx: 0, vy: 0 },
-            { el: document.getElementById('layer7'), depth: 0.7, x: 0, y: 0, vx: 0, vy: 0 }
+            { el: document.getElementById('layer1'), depth: 0.08, x: 0, y: 0 },
+            { el: document.getElementById('layer2'), depth: 0.12, x: 0, y: 0 },
+            { el: document.getElementById('layer3'), depth: 0.18, x: 0, y: 0 },
+            { el: document.getElementById('layer4'), depth: 0.25, x: 0, y: 0 },
+            { el: document.getElementById('layer5'), depth: 0.35, x: 0, y: 0 },
+            { el: document.getElementById('layer6'), depth: 0.5, x: 0, y: 0 },
+            { el: document.getElementById('layer7'), depth: 0.7, x: 0, y: 0 }
         ];
         
         let mouseX = window.innerWidth / 2;
         let mouseY = window.innerHeight / 2;
-        let prevMouseX = mouseX;
-        let prevMouseY = mouseY;
         let zoomPhase = 0;
         let lastMoveTime = Date.now();
-        let isFirstMove = true;
         
         document.addEventListener('mousemove', (e) => {
-            // On first move, don't calculate velocity to avoid jump
-            if (isFirstMove) {
-                mouseX = e.clientX;
-                mouseY = e.clientY;
-                prevMouseX = mouseX;
-                prevMouseY = mouseY;
-                isFirstMove = false;
-            } else {
-                prevMouseX = mouseX;
-                prevMouseY = mouseY;
-                mouseX = e.clientX;
-                mouseY = e.clientY;
-            }
+            mouseX = e.clientX;
+            mouseY = e.clientY;
             lastMoveTime = Date.now();
         });
         
@@ -142,10 +128,11 @@
         function animate() {
             requestAnimationFrame(animate);
             
-            const mouseVelX = mouseX - prevMouseX;
-            const mouseVelY = mouseY - prevMouseY;
-            prevMouseX = mouseX;
-            prevMouseY = mouseY;
+            // Calculate mouse position relative to center
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            const offsetX = mouseX - centerX;
+            const offsetY = mouseY - centerY;
             
             zoomPhase += 0.001;
             const breatheZoom = 1 + Math.sin(zoomPhase) * 0.015;
@@ -155,20 +142,13 @@
             const shouldRecenter = timeSinceMove > 3000;
             
             layers.forEach((layer) => {
-                layer.vx += mouseVelX * layer.depth * 0.3;
-                layer.vy += mouseVelY * layer.depth * 0.3;
+                // Calculate target position based on distance from center
+                const targetX = shouldRecenter ? 0 : offsetX * layer.depth * 0.15;
+                const targetY = shouldRecenter ? 0 : offsetY * layer.depth * 0.15;
                 
-                layer.vx *= 0.92;
-                layer.vy *= 0.92;
-                
-                layer.x += layer.vx;
-                layer.y += layer.vy;
-                
-                // Recenter after 3 seconds of inactivity
-                if (shouldRecenter) {
-                    layer.x *= 0.95;
-                    layer.y *= 0.95;
-                }
+                // Smooth interpolation to target
+                layer.x += (targetX - layer.x) * 0.1;
+                layer.y += (targetY - layer.y) * 0.1;
                 
                 layer.el.style.transform = `
                     translate(${layer.x}px, ${layer.y}px)
