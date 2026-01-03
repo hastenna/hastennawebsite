@@ -148,9 +148,6 @@
                 layer.x += layer.vx;
                 layer.y += layer.vy;
                 
-                layer.x *= 0.98;
-                layer.y *= 0.98;
-                
                 layer.el.style.transform = `
                     translate(${layer.x}px, ${layer.y}px)
                     scale(${breatheZoom})
