@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>hastenna</title>
-    <link rel="preload" as="image" href="hastennabanner.jpg">
     <style>
         * {
             margin: 0;
@@ -20,71 +19,10 @@
             cursor: none;
         }
         
-        #container {
-            position: fixed;
-            top: 0;
-            left: 0;
+        #canvas {
+            display: block;
             width: 100vw;
             height: 100vh;
-        }
-        
-        /* Main image with aggressive chromatic aberration */
-        #mainImage {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            filter: contrast(1.15) saturate(1.3);
-            mix-blend-mode: normal;
-        }
-        
-        /* RGB split channels for chromatic aberration */
-        .channel {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url('hastennabanner.jpg');
-            background-size: cover;
-            background-position: center;
-            mix-blend-mode: screen;
-            opacity: 0.7;
-        }
-        
-        #redChannel {
-            filter: brightness(1.2) contrast(1.3);
-            animation: redShift 4s ease-in-out infinite;
-        }
-        
-        #cyanChannel {
-            filter: brightness(1.1) hue-rotate(180deg);
-            animation: cyanShift 4s ease-in-out infinite;
-        }
-        
-        @keyframes redShift {
-            0%, 100% { transform: translate(-2px, 1px); }
-            50% { transform: translate(3px, -2px); }
-        }
-        
-        @keyframes cyanShift {
-            0%, 100% { transform: translate(2px, -1px); }
-            50% { transform: translate(-3px, 2px); }
-        }
-        
-        /* Aggressive vignette */
-        #vignette {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.9) 100%);
-            pointer-events: none;
-            z-index: 10;
         }
         
         /* Heavy scanlines */
@@ -119,7 +57,7 @@
             width: 200%;
             height: 200%;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 600 600' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-            opacity: 0.2;
+            opacity: 0.15;
             pointer-events: none;
             z-index: 12;
             animation: grainMove 0.3s steps(2) infinite;
@@ -129,37 +67,6 @@
             0%, 100% { transform: translate(0, 0); }
             33% { transform: translate(-3%, -3%); }
             66% { transform: translate(3%, 3%); }
-        }
-        
-        /* Custom cursor */
-        #cursor {
-            position: fixed;
-            width: 30px;
-            height: 30px;
-            border: 2px solid rgba(255, 0, 100, 0.8);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 9999;
-            transition: transform 0.1s ease-out, opacity 0.3s ease-out;
-            box-shadow: 0 0 20px rgba(255, 0, 100, 0.5), inset 0 0 20px rgba(0, 255, 255, 0.3);
-            mix-blend-mode: difference;
-            opacity: 1;
-        }
-        
-        #cursor.hidden {
-            opacity: 0;
-        }
-        
-        #cursor::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 4px;
-            height: 4px;
-            background: rgba(0, 255, 255, 0.9);
-            border-radius: 50%;
         }
         
         /* Glitch overlay */
@@ -199,90 +106,228 @@
                 transform: translate(3px, -4px);
             }
         }
-        
-        /* Screen distortion on major glitch */
-        @keyframes screenDistort {
-            0%, 100% { transform: translate(0, 0) scaleY(1); }
-            10% { transform: translate(-8px, 0) scaleY(0.98); }
-            20% { transform: translate(8px, 0) scaleY(1.02); }
-            30% { transform: translate(-5px, 0) scaleY(0.99); }
-            40% { transform: translate(5px, 0) scaleY(1.01); }
-            50% { transform: translate(-3px, 0) scaleY(1); }
-            60% { transform: translate(3px, 0) scaleY(0.995); }
-            70% { transform: translate(-2px, 0) scaleY(1.005); }
-            80% { transform: translate(2px, 0) scaleY(1); }
-        }
-        
-        .distort-active {
-            animation: screenDistort 0.5s ease-out;
-        }
     </style>
 </head>
 <body>
-    <div id="container" class="distort-target">
-        <div class="channel" id="redChannel"></div>
-        <img src="hastennabanner.jpg" alt="hastenna" id="mainImage">
-        <div class="channel" id="cyanChannel"></div>
-        <div id="vignette"></div>
-        <div id="scanlines"></div>
-        <div id="grain"></div>
-        <div class="glitch-overlay" id="glitchOverlay"></div>
-    </div>
+    <canvas id="canvas"></canvas>
+    <div id="scanlines"></div>
+    <div id="grain"></div>
+    <div class="glitch-overlay" id="glitchOverlay"></div>
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        const container = document.getElementById('container');
-        const glitchOverlay = document.getElementById('glitchOverlay');
-        const mainImage = document.getElementById('mainImage');
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ 
+            canvas: document.getElementById('canvas'),
+            antialias: true,
+            alpha: true
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x000000, 1);
         
-        // Fullscreen toggle on click
+        camera.position.z = 5;
+        
+        // Load texture
+        const textureLoader = new THREE.TextureLoader();
+        const texture = textureLoader.load('hastennabanner.jpg');
+        
+        // Hypercube vertices in 4D space
+        const vertices4D = [
+            [-1, -1, -1, -1], [1, -1, -1, -1], [1, 1, -1, -1], [-1, 1, -1, -1],
+            [-1, -1, 1, -1], [1, -1, 1, -1], [1, 1, 1, -1], [-1, 1, 1, -1],
+            [-1, -1, -1, 1], [1, -1, -1, 1], [1, 1, -1, 1], [-1, 1, -1, 1],
+            [-1, -1, 1, 1], [1, -1, 1, 1], [1, 1, 1, 1], [-1, 1, 1, 1]
+        ];
+        
+        // Hypercube edges
+        const edges4D = [
+            // Inner cube
+            [0,1], [1,2], [2,3], [3,0],
+            [4,5], [5,6], [6,7], [7,4],
+            [0,4], [1,5], [2,6], [3,7],
+            // Outer cube
+            [8,9], [9,10], [10,11], [11,8],
+            [12,13], [13,14], [14,15], [15,12],
+            [8,12], [9,13], [10,14], [11,15],
+            // Connections
+            [0,8], [1,9], [2,10], [3,11],
+            [4,12], [5,13], [6,14], [7,15]
+        ];
+        
+        // Create line geometry for hypercube edges
+        const edgeGeometry = new THREE.BufferGeometry();
+        const edgeMaterial = new THREE.LineBasicMaterial({ 
+            color: 0xff0066,
+            transparent: true,
+            opacity: 0.8,
+            linewidth: 2
+        });
+        const edgeLines = new THREE.LineSegments(edgeGeometry, edgeMaterial);
+        scene.add(edgeLines);
+        
+        // Create faces with texture
+        const faces = [];
+        const faceIndices = [
+            // Inner cube faces
+            [0,1,2,3], [4,5,6,7], [0,1,5,4], [2,3,7,6], [0,3,7,4], [1,2,6,5],
+            // Outer cube faces
+            [8,9,10,11], [12,13,14,15], [8,9,13,12], [10,11,15,14], [8,11,15,12], [9,10,14,13]
+        ];
+        
+        faceIndices.forEach(indices => {
+            const geometry = new THREE.BufferGeometry();
+            const material = new THREE.MeshBasicMaterial({ 
+                map: texture,
+                transparent: true,
+                opacity: 0.4,
+                side: THREE.DoubleSide
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            faces.push({ mesh, indices });
+            scene.add(mesh);
+        });
+        
+        // Rotation angles for 4D rotation
+        let angleXY = 0, angleXZ = 0, angleXW = 0;
+        let angleYZ = 0, angleYW = 0, angleZW = 0;
+        
+        // Mouse interaction
+        let mouseX = 0, mouseY = 0;
+        let targetRotationSpeed = 1;
+        
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+            mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+        });
+        
         document.addEventListener('click', () => {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(() => {});
             } else {
                 document.exitFullscreen().catch(() => {});
             }
+            
+            // Speed boost on click
+            targetRotationSpeed = 3;
+            setTimeout(() => { targetRotationSpeed = 1; }, 1000);
         });
         
-        // Aggressive glitch system
-        function triggerMinorGlitch() {
-            glitchOverlay.classList.add('glitch-active');
+        // 4D rotation matrix
+        function rotate4D(v, xy, xz, xw, yz, yw, zw) {
+            let [x, y, z, w] = v;
             
-            // Random filter spike
-            const filters = [
-                'contrast(1.5) saturate(1.8) hue-rotate(10deg)',
-                'contrast(0.8) saturate(0.5) brightness(1.3)',
-                'invert(0.2) hue-rotate(-20deg) saturate(2)',
-                'brightness(1.4) contrast(1.3) saturate(0.7)'
-            ];
-            mainImage.style.filter = filters[Math.floor(Math.random() * filters.length)];
+            // XY rotation
+            let newX = x * Math.cos(xy) - y * Math.sin(xy);
+            let newY = x * Math.sin(xy) + y * Math.cos(xy);
+            x = newX; y = newY;
+            
+            // XZ rotation
+            newX = x * Math.cos(xz) - z * Math.sin(xz);
+            let newZ = x * Math.sin(xz) + z * Math.cos(xz);
+            x = newX; z = newZ;
+            
+            // XW rotation
+            newX = x * Math.cos(xw) - w * Math.sin(xw);
+            let newW = x * Math.sin(xw) + w * Math.cos(xw);
+            x = newX; w = newW;
+            
+            // YZ rotation
+            newY = y * Math.cos(yz) - z * Math.sin(yz);
+            newZ = y * Math.sin(yz) + z * Math.cos(yz);
+            y = newY; z = newZ;
+            
+            // YW rotation
+            newY = y * Math.cos(yw) - w * Math.sin(yw);
+            newW = y * Math.sin(yw) + w * Math.cos(yw);
+            y = newY; w = newW;
+            
+            // ZW rotation
+            newZ = z * Math.cos(zw) - w * Math.sin(zw);
+            newW = z * Math.sin(zw) + w * Math.cos(zw);
+            z = newZ; w = newW;
+            
+            return [x, y, z, w];
+        }
+        
+        // Project 4D to 3D
+        function project4Dto3D(v) {
+            const distance = 2;
+            const w = v[3];
+            const scale = distance / (distance - w);
+            return [v[0] * scale, v[1] * scale, v[2] * scale];
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Update rotation angles
+            const speed = 0.003 * targetRotationSpeed;
+            angleXY += speed;
+            angleXZ += speed * 0.7;
+            angleXW += speed * 0.5 + mouseX * 0.01;
+            angleYZ += speed * 0.6;
+            angleYW += speed * 0.4 + mouseY * 0.01;
+            angleZW += speed * 0.8;
+            
+            // Rotate and project vertices
+            const projectedVertices = vertices4D.map(v => {
+                const rotated = rotate4D(v, angleXY, angleXZ, angleXW, angleYZ, angleYW, angleZW);
+                return project4Dto3D(rotated);
+            });
+            
+            // Update edges
+            const positions = [];
+            edges4D.forEach(([i, j]) => {
+                positions.push(...projectedVertices[i], ...projectedVertices[j]);
+            });
+            edgeGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            
+            // Update faces
+            faces.forEach(face => {
+                const verts = face.indices.map(i => projectedVertices[i]);
+                const positions = new Float32Array([
+                    ...verts[0], ...verts[1], ...verts[2],
+                    ...verts[0], ...verts[2], ...verts[3]
+                ]);
+                face.mesh.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                
+                // UV mapping
+                const uvs = new Float32Array([
+                    0, 0, 1, 0, 1, 1,
+                    0, 0, 1, 1, 0, 1
+                ]);
+                face.mesh.geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+            });
+            
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // Glitch system
+        const glitchOverlay = document.getElementById('glitchOverlay');
+        
+        function triggerGlitch() {
+            glitchOverlay.classList.add('glitch-active');
             
             setTimeout(() => {
                 glitchOverlay.classList.remove('glitch-active');
-                mainImage.style.filter = 'contrast(1.15) saturate(1.3)';
             }, 300);
             
-            // Next glitch: 3-8 seconds
-            setTimeout(triggerMinorGlitch, 3000 + Math.random() * 5000);
+            setTimeout(triggerGlitch, 5000 + Math.random() * 10000);
         }
         
-        function triggerMajorGlitch() {
-            container.classList.add('distort-active');
-            glitchOverlay.classList.add('glitch-active');
-            mainImage.style.filter = 'invert(1) hue-rotate(180deg) saturate(2)';
-            
-            setTimeout(() => {
-                container.classList.remove('distort-active');
-                glitchOverlay.classList.remove('glitch-active');
-                mainImage.style.filter = 'contrast(1.15) saturate(1.3)';
-            }, 500);
-            
-            // Next major glitch: 15-30 seconds
-            setTimeout(triggerMajorGlitch, 15000 + Math.random() * 15000);
-        }
+        setTimeout(triggerGlitch, 3000);
         
-        // Start glitch cycles
-        setTimeout(triggerMinorGlitch, 2000);
-        setTimeout(triggerMajorGlitch, 10000);
+        // Handle resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>
