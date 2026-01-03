@@ -111,12 +111,14 @@
         let prevMouseX = mouseX;
         let prevMouseY = mouseY;
         let zoomPhase = 0;
+        let lastMoveTime = Date.now();
         
         document.addEventListener('mousemove', (e) => {
             prevMouseX = mouseX;
             prevMouseY = mouseY;
             mouseX = e.clientX;
             mouseY = e.clientY;
+            lastMoveTime = Date.now();
         });
         
         document.addEventListener('click', () => {
@@ -138,6 +140,10 @@
             zoomPhase += 0.001;
             const breatheZoom = 1 + Math.sin(zoomPhase) * 0.015;
             
+            // Check if mouse has been inactive for 3 seconds
+            const timeSinceMove = Date.now() - lastMoveTime;
+            const shouldRecenter = timeSinceMove > 3000;
+            
             layers.forEach((layer) => {
                 layer.vx += mouseVelX * layer.depth * 0.3;
                 layer.vy += mouseVelY * layer.depth * 0.3;
@@ -147,6 +153,12 @@
                 
                 layer.x += layer.vx;
                 layer.y += layer.vy;
+                
+                // Recenter after 3 seconds of inactivity
+                if (shouldRecenter) {
+                    layer.x *= 0.95;
+                    layer.y *= 0.95;
+                }
                 
                 layer.el.style.transform = `
                     translate(${layer.x}px, ${layer.y}px)
