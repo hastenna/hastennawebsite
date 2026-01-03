@@ -112,12 +112,22 @@
         let prevMouseY = mouseY;
         let zoomPhase = 0;
         let lastMoveTime = Date.now();
+        let isFirstMove = true;
         
         document.addEventListener('mousemove', (e) => {
-            prevMouseX = mouseX;
-            prevMouseY = mouseY;
-            mouseX = e.clientX;
-            mouseY = e.clientY;
+            // On first move, don't calculate velocity to avoid jump
+            if (isFirstMove) {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                prevMouseX = mouseX;
+                prevMouseY = mouseY;
+                isFirstMove = false;
+            } else {
+                prevMouseX = mouseX;
+                prevMouseY = mouseY;
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            }
             lastMoveTime = Date.now();
         });
         
